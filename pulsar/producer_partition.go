@@ -302,6 +302,7 @@ func (p *partitionProducer) grabCnx() error {
 	p._setConn(res.Cnx)
 	err = p._getConn().RegisterListener(p.producerID, p)
 	if err != nil {
+		p.ConnectionClosed()
 		return err
 	}
 
