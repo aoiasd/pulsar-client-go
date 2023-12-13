@@ -1057,6 +1057,7 @@ func (pc *partitionConsumer) MessageReceived(response *pb.CommandMessage, header
 			}
 
 			pc.queueCh <- messages
+			pc.log.Infof("test pulsar queue length %v", len(pc.queueCh))
 			return nil
 		}
 	}
@@ -1236,6 +1237,7 @@ func (pc *partitionConsumer) MessageReceived(response *pb.CommandMessage, header
 
 	// send messages to the dispatcher
 	pc.queueCh <- messages
+	pc.log.Infof("test pulsar queue length %v", len(pc.queueCh))
 	return nil
 }
 

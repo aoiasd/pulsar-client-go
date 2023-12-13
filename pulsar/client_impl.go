@@ -23,8 +23,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/apache/pulsar-client-go/pulsar/auth"
-	"github.com/apache/pulsar-client-go/pulsar/internal"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sirupsen/logrus"
+
+	"github.com/apache/pulsar-client-go/pulsar/internal/auth"
+	"github.com/apache/pulsar-client-go/pulsar/internal/pulsar/internal"
 	"github.com/apache/pulsar-client-go/pulsar/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
@@ -57,7 +60,9 @@ func newClient(options ClientOptions) (Client, error) {
 	if options.Logger != nil {
 		logger = options.Logger
 	} else {
-		logger = log.NewLoggerWithLogrus(logrus.StandardLogger())
+		logr := logrus.StandardLogger()
+		logr.SetLevel(logrus.DebugLevel)
+		logger = log.NewLoggerWithLogrus(logr)
 	}
 
 	connectionMaxIdleTime := options.ConnectionMaxIdleTime
