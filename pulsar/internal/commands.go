@@ -121,6 +121,10 @@ func (r *MessageReader) ReadMessageMetadata() (*pb.MessageMetadata, error) {
 	return &meta, nil
 }
 
+func (r *MessageReader) Clear() {
+	r.buffer = nil
+}
+
 func (r *MessageReader) ReadBrokerMetadata() (*pb.BrokerEntryMetadata, error) {
 	magicNumber := binary.BigEndian.Uint16(r.buffer.Get(r.buffer.ReaderIndex(), 2))
 	if magicNumber != magicBrokerEntryMetadata {

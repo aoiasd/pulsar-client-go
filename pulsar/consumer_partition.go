@@ -25,6 +25,7 @@ import (
 	"math"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"google.golang.org/protobuf/proto"
@@ -401,6 +402,8 @@ func newPartitionConsumer(parent Consumer, client *client, options *partitionCon
 		}
 	}
 
+	go pc.printLoop()
+
 	go pc.dispatcher()
 
 	go pc.runEventsLoop()
@@ -565,7 +568,7 @@ func (pc *partitionConsumer) internalUnsubscribe(unsub *unsubscribeRequest) {
 	if pc.nackTracker != nil {
 		pc.nackTracker.Close()
 	}
-	pc.log.Infof("The consumer[%d] successfully unsubscribed", pc.consumerID)
+	pc.log.Infof("The consumer[%d] successfully unsubscribed len %d", pc.consumerID, len(pc.queueCh))
 	pc.setConsumerState(consumerUnsubscribed)
 }
 
@@ -992,6 +995,8 @@ func (pc *partitionConsumer) internalAckList(msgIDs []*pb.MessageIdData) {
 	})
 }
 
+var GlobalCount atomic.Int32
+
 func (pc *partitionConsumer) MessageReceived(response *pb.CommandMessage, headersAndPayload internal.Buffer) error {
 	pbMsgID := response.GetMessageId()
 
@@ -1057,7 +1062,6 @@ func (pc *partitionConsumer) MessageReceived(response *pb.CommandMessage, header
 			}
 
 			pc.queueCh <- messages
-			pc.log.Infof("test pulsar queue length %v", len(pc.queueCh))
 			return nil
 		}
 	}
@@ -1237,8 +1241,19 @@ func (pc *partitionConsumer) MessageReceived(response *pb.CommandMessage, header
 
 	// send messages to the dispatcher
 	pc.queueCh <- messages
-	pc.log.Infof("test pulsar queue length %v", len(pc.queueCh))
 	return nil
+}
+
+func (pc *partitionConsumer) printLoop() {
+	for {
+		select {
+		case <-pc.closeCh:
+			return
+		default:
+			pc.log.Infof("test consumer %d queue %d", pc.consumerID, len(pc.queueCh))
+			time.Sleep(20 * time.Second)
+		}
+	}
 }
 
 func (pc *partitionConsumer) processMessageChunk(compressedPayload internal.Buffer,
@@ -1613,7 +1628,7 @@ func (pc *partitionConsumer) internalClose(req *closeRequest) {
 	if err != nil {
 		pc.log.WithError(err).Warn("Failed to close consumer")
 	} else {
-		pc.log.Info("Closed consumer")
+		pc.log.Infof("Closed consumer queueLen: %v", len(pc.queueCh))
 	}
 
 	pc.compressionProviders.Range(func(_, v interface{}) bool {
@@ -1958,7 +1973,9 @@ func (pc *partitionConsumer) Decompress(msgMeta *pb.MessageMetadata, payload int
 	if err != nil {
 		return nil, err
 	}
-
+	// provider.
+	// bytes := make([]byte, len(uncompressed))
+	// copy(bytes, uncompressed)
 	return internal.NewBufferWrapper(uncompressed), nil
 }
 

@@ -60,9 +60,7 @@ func newClient(options ClientOptions) (Client, error) {
 	if options.Logger != nil {
 		logger = options.Logger
 	} else {
-		logr := logrus.StandardLogger()
-		logr.SetLevel(logrus.DebugLevel)
-		logger = log.NewLoggerWithLogrus(logr)
+		logger = log.NewLoggerWithLogrus(logrus.StandardLogger())
 	}
 
 	connectionMaxIdleTime := options.ConnectionMaxIdleTime
