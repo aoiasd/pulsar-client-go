@@ -1,4 +1,4 @@
-module github.com/milvus-io/pulsar-client-go
+module github.com/aoiasd/pulsar-client-go
 
 go 1.18
 
